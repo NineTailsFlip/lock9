@@ -1,19 +1,41 @@
 # Lock
 
-The lock screen of [NineTailsFlip](https://github.com/NineTailsFlip)'s LineageOS build for keypad
-flip phones (ALT AT-M140, thor2), in the look of the Nine apps: the time, date, next alarm,
-battery and carrier at the top; the music and the notifications under them; the PIN typed
-straight on the keypad. The SIM PIN and PUK, the flashlight, the secure camera and the
-emergency call are there too.
+The lock screen of NineTailsFlip's LineageOS for keypad flip phones, in the Nine look.
 
-[`docs/FEATURES.md`](docs/FEATURES.md) lists every feature of the stock lock screen and how Lock
-does it.
+[![Build](https://github.com/NineTailsFlip/lock9/actions/workflows/build.yml/badge.svg)](https://github.com/NineTailsFlip/lock9/actions/workflows/build.yml)
+[![Release](https://img.shields.io/github/v/release/NineTailsFlip/lock9)](https://github.com/NineTailsFlip/lock9/releases/latest)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
 
-## Keys
+Lock is shown whenever the phone on the [thor2 image](https://github.com/kloploid/android_vendor_thor2)
+(ALT AT-M140) locks: the time and the notifications at a glance, and the PIN typed straight on the
+keypad. Part of [NineTailsFlip](https://github.com/NineTailsFlip).
+
+## Features
+
+- **At the top:** the time, date, next alarm, battery and "full in …" while charging, the
+  carrier or "No SIM", the owner info.
+- **Notifications**, newest first, following the lock screen settings: none, contents hidden,
+  secret and silent ones left out; before the first unlock after a restart, the app only.
+- **Music:** what's playing, play/pause, previous and next.
+- **PIN** typed straight on the keypad: auto-confirm (when Android's is on), "wrong PIN", and the
+  countdown after too many tries.
+- **SIM PIN and PUK**, with the tries left.
+- **Shortcuts:** flashlight, secure camera, emergency call; Back turns the screen off.
+- Calls, alarms and the camera show over it; Home does nothing on it.
+
+[`docs/FEATURES.md`](docs/FEATURES.md) maps every feature of the stock lock screen to Lock.
+
+## Installation
+
+Lock is part of the image and isn't installed on its own: the ROM build re-signs it with the
+platform key and installs it as a privileged, persistent, direct-boot-aware app. It updates with
+the image.
+
+## Usage
 
 | Key | Does |
 |---|---|
-| Digits | Type the PIN (with Android's auto-confirm on, it unlocks on the last digit) |
+| Digits | Type the PIN |
 | OK | Unlock; on a notification, open it once unlocked; on the music, play/pause |
 | Up / Down | Choose a notification |
 | Left | Dismiss a notification; on the music, the previous track |
@@ -22,29 +44,50 @@ does it.
 | `*` | Flashlight, camera, emergency call, screen off |
 | Call | Emergency call |
 
-## How it's safe
+## How it works
 
-The system keyguard stays underneath as the security boundary: Lock is shown over it. It checks
-the PIN through `LockSettingsService`, as the stock bouncer does (same throttling after wrong
-tries, same unlocking of encrypted storage after a restart), then asks SystemUI to finish the
-keyguard with a broadcast SystemUI only takes from a platform-signed app
-([android_vendor_thor2](https://github.com/kloploid/android_vendor_thor2), `frameworks_base`
-patch `0006`). If Lock isn't running, crashes, or the broadcast goes unanswered, the stock lock
-screen and Android's own PIN prompt are what's left: the phone is never left unlocked.
+The system keyguard stays underneath as the security boundary; Lock is an activity shown over it
+(`showWhenLocked`), started as the keyguard locks. Lock checks the PIN through
+`LockSettingsService`, as the stock bouncer does — the same throttling after wrong tries, the
+same unlocking of encrypted storage after a restart — and then asks SystemUI to finish the
+keyguard with a broadcast SystemUI only takes from a platform-signed app (android_vendor_thor2's
+`frameworks_base` patch `0006`). A second patch (`0007`) keeps Home from leaving it.
 
-## In the image
-
-The ROM build re-signs it with the platform key and installs it as a privileged, persistent,
-direct-boot-aware app; `ro.config.thor2_lockscreen` names it for the patch that keeps Home from
-leaving the lock screen (`0007`). It isn't updated on its own.
+If Lock isn't running, crashes, or the broadcast goes unanswered, the stock lock screen and
+Android's own PIN prompt are what's left: the phone is never left unlocked.
 
 ## Building
 
-```sh
-git clone --recursive https://github.com/NineTailsFlip/lock9
-./gradlew assembleRelease
+Requirements: JDK 17+, Android SDK (platform 34).
+
+```bash
+git clone --recursive https://github.com/NineTailsFlip/lock9.git
+cd lock9
+./gradlew :app:testDebugUnitTest :app:assembleRelease
 ```
+
+A tag `v<versionName>` builds and publishes a release (NineTailsFlip/.github's `android.yml`).
+
+## Project structure
+
+| Path | What's there |
+|---|---|
+| `app/src/main/java/io/github/ninetailsflip/lock/` | `LockApp` (watches the keyguard), `LockActivity` (the screen), `Unlocker` (PIN, SIM, unlocking), `Status` (the top lines), `Notifications` (notifications and music) |
+| `docs/FEATURES.md` | The stock lock screen's features, and how Lock does each |
+| `nine-core/` | Git submodule: [nine-core](https://github.com/NineTailsFlip/nine-core) |
+
+## Limitations
+
+- PIN only: with a pattern or password, Android's own prompt takes over.
+- No status bar icons (battery and carrier are shown as text), no emergency information.
+
+## Contributing
+
+Issues and pull requests are welcome; see
+[CONTRIBUTING](https://github.com/NineTailsFlip/.github/blob/main/CONTRIBUTING.md). Report
+anything that could unlock the phone without its PIN privately, as
+[SECURITY](https://github.com/NineTailsFlip/.github/blob/main/SECURITY.md) describes.
 
 ## License
 
-GPL-3.0, like the rest of the Nine suite.
+GPL-3.0 — see [LICENSE](LICENSE), like the rest of the Nine apps.
