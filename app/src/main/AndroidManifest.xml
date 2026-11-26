@@ -40,16 +40,25 @@
         android:directBootAware="true"
         android:defaultToDeviceProtectedStorage="true">
 
-        <!-- Over the keyguard, in a task of its own, never in Recents. -->
+        <!-- Over the keyguard, in a task of its own, never in Recents. The system and SystemUI
+             start it in place of the stock keyguard (org.thor2.keyguard.action.SHOW,
+             android_vendor_thor2's patch 0009); ACCESS_KEYGUARD_SECURE_STORAGE is
+             signature-only, so no other app can. -->
         <activity
             android:name=".LockActivity"
-            android:exported="false"
+            android:exported="true"
+            android:permission="android.permission.ACCESS_KEYGUARD_SECURE_STORAGE"
             android:launchMode="singleInstance"
             android:taskAffinity="io.github.ninetailsflip.lock.screen"
             android:excludeFromRecents="true"
             android:showWhenLocked="true"
             android:directBootAware="true"
-            android:configChanges="keyboardHidden|orientation|screenSize|keyboard|navigation" />
+            android:configChanges="keyboardHidden|orientation|screenSize|keyboard|navigation">
+            <intent-filter>
+                <action android:name="org.thor2.keyguard.action.SHOW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".LookActivity"

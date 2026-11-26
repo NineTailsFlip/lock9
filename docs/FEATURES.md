@@ -30,6 +30,9 @@ back to Android's own PIN prompt.
 | Before the first unlock after a restart (Direct Boot) | ✅ — Lock is direct-boot aware and keeps its own settings in device-protected storage |
 | Home does nothing on the lock screen | ✅ — `frameworks_base` patch `0007` |
 | Calls, alarms, the camera and the emergency dialer show over it | ✅ — they're shown-when-locked activities above Lock |
+| Home over one of them (the camera) returns to the lock screen, then home once unlocked | ✅ — patch `0009` starts Lock, which goes home after the unlock |
+| An app over the lock screen asks for the unlock (the camera's gallery) | ✅ — patch `0009`: Lock takes the PIN ("unlock to continue") in place of the bouncer, and the app carries on once unlocked |
+| Uncovered when what was over it goes | ✅ — patch `0009` brings Lock back rather than the stock keyguard |
 | Wallpaper | — Nine screens are black |
 | Lock screen rotation, AOD / ambient display, double-tap to wake, lift to wake | — |
 
@@ -86,5 +89,5 @@ back to Android's own PIN prompt.
 | Camera (secure, no access to the gallery) | ✅ — `*` menu |
 | Emergency information | ⏳ |
 | Turn the screen off | ✅ — Back (with nothing typed) |
-| Quick settings from the lock screen | — (no pull-down on a keypad; long press Home still opens the shade) |
+| Quick settings from the lock screen | — (the shade, in Settings, opens only unlocked; the flashlight is in `*`) |
 | Lineage: lock screen targets/shortcuts, visualizer, blur | — |

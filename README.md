@@ -21,7 +21,9 @@ keypad. Part of [NineTailsFlip](https://github.com/NineTailsFlip).
   countdown after too many tries.
 - **SIM PIN and PUK**, with the tries left.
 - **Shortcuts:** flashlight, secure camera, emergency call; Back turns the screen off.
-- Calls, alarms and the camera show over it; Home does nothing on it.
+- Calls, alarms and the camera show over it; Home does nothing on it. Whatever would show the
+  stock lock screen or its PIN prompt shows Lock instead: Home over the camera, an app over the
+  lock screen asking to unlock (Lock says "unlock to continue", then the app carries on).
 
 [`docs/FEATURES.md`](docs/FEATURES.md) maps every feature of the stock lock screen to Lock.
 
@@ -51,7 +53,10 @@ The system keyguard stays underneath as the security boundary; Lock is an activi
 `LockSettingsService`, as the stock bouncer does — the same throttling after wrong tries, the
 same unlocking of encrypted storage after a restart — and then asks SystemUI to finish the
 keyguard with a broadcast SystemUI only takes from a platform-signed app (android_vendor_thor2's
-`frameworks_base` patch `0006`). A second patch (`0007`) keeps Home from leaving it.
+`frameworks_base` patch `0006`). A second patch (`0007`) keeps Home from leaving it, and a third
+(`0009`) starts Lock wherever the stock keyguard or bouncer would come up, with
+`org.thor2.keyguard.action.SHOW` - an intent only the system and SystemUI may send, as it needs
+the signature-only `ACCESS_KEYGUARD_SECURE_STORAGE`.
 
 If Lock isn't running, crashes, or the broadcast goes unanswered, the stock lock screen and
 Android's own PIN prompt are what's left: the phone is never left unlocked.

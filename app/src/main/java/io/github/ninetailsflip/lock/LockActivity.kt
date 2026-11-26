@@ -52,6 +52,10 @@ class LockActivity : NineActivity() {
     /** The notification to open once unlocked (OK on it with the PIN still to type). */
     private var pendingOpen: LockNotification? = null
     private var torchOn = false
+    /** Home was pressed over another app on the keyguard (the camera): home follows the unlock. */
+    private var thenHome = false
+    /** An app over the keyguard asked for the phone to be unlocked (the camera's gallery, say). */
+    private var asked = false
 
     private lateinit var clock: TextView
     private lateinit var date: TextView
@@ -134,7 +138,17 @@ class LockActivity : NineActivity() {
             },
         )
         LockFeed.onChange = { runOnUiThread { render() } }
+        takeRequest(intent)
         render()
+    }
+
+    /** The system shows this screen in place of the stock keyguard (android_vendor_thor2's patch
+     *  0009), saying why: Home over an app on the keyguard, or an app asking for the unlock. */
+    private fun takeRequest(intent: Intent?) {
+        if (intent?.action != SHOW_ACTION) return
+        if (intent.getBooleanExtra(EXTRA_THEN_HOME, false)) thenHome = true
+        asked = intent.getBooleanExtra(EXTRA_DISMISS, false)
+        if (asked) message = "unlock to continue"
     }
 
     override fun onResume() {
@@ -171,6 +185,7 @@ class LockActivity : NineActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         clearTyped()
+        takeRequest(intent)
         render()
     }
 
@@ -179,6 +194,13 @@ class LockActivity : NineActivity() {
         val open = pendingOpen
         pendingOpen = null
         if (open != null) runCatching { open.open?.send() }
+        if (thenHome && open == null) {
+            runCatching {
+                startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+        }
+        thenHome = false
+        asked = false
         finish()
         overridePendingTransition(0, 0)
     }
@@ -224,6 +246,7 @@ class LockActivity : NineActivity() {
     private fun hint(): String = when {
         entry != Entry.PIN -> "type it · ok done · ‹ delete · * menu"
         !Unlocker.isSecure(this) -> "ok unlock · ↑↓ notifications · * menu"
+        typed.isEmpty() && asked -> "type the PIN to continue · * menu · ‹ screen off"
         typed.isEmpty() -> "type the PIN · ok open · * menu · ‹ screen off"
         else -> "ok unlock · ‹ delete"
     }
@@ -426,6 +449,11 @@ class LockActivity : NineActivity() {
     }
 
     companion object {
+        /** What the system starts this with (patch 0009); only it and SystemUI may (the manifest). */
+        const val SHOW_ACTION = "org.thor2.keyguard.action.SHOW"
+        const val EXTRA_DISMISS = "org.thor2.keyguard.extra.DISMISS"
+        const val EXTRA_THEN_HOME = "org.thor2.keyguard.extra.THEN_HOME"
+
         private var shown = java.lang.ref.WeakReference<LockActivity>(null)
 
         /** The lock screen showing now, for LockApp to close when the keyguard goes. */
